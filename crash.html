@@ -589,12 +589,16 @@ async function applyBalanceDelta(delta) {
   userBalance = Math.max(0, userBalance + delta);
   updateBalanceDisplay();
   if (currentUser) {
-    await db.from('profiles').update({ balance: userBalance }).eq('id', currentUser.id);
+    const { error } = await db.from('profiles').update({ balance: userBalance }).eq('id', currentUser.id);
+    if (error) {
+      console.error('Failed to update balance:', error);
+      toast('Unable to sync balance with the server.', 'error');
+    }
   }
 }
 
 // ── BET BUTTON ──
-function handleBetBtn() {
+async function handleBetBtn() {
   if (state === 'waiting') {
     // queue for this upcoming round
     const amt = parseFloat(document.getElementById('bet-amount').value);
@@ -602,8 +606,7 @@ function handleBetBtn() {
     if (amt > userBalance) return toast('Insufficient balance.', 'error');
     betAmount  = amt;
     pendingBet = true;
-    userBalance -= amt; // lock funds immediately
-    updateBalanceDisplay();
+    await applyBalanceDelta(-amt); // deduct stake immediately and persist it
     setBetBtnState('next');
     toast(`Bet of ◈${formatCash(amt)} queued for next round.`);
   } else if (state === 'running') {

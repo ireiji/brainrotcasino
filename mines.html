@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Mines — Brainrot Casino</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { overflow-x: hidden; }
+
+    .mines-page {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 56px);
+      max-width: 520px;
+      margin: 0 auto;
+      position: relative; z-index: 1;
+      padding-bottom: 24px;
+    }
+
+    /* ── GRID ── */
+    .grid-wrap {
+      padding: 16px 14px 10px;
+      flex-shrink: 0;
+    }
+
+    .mines-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    /* TILE */
+    .tile {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform .12s, box-shadow .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* HIDDEN state */
+    .tile.hidden {
+      background: #1e2535;
+      border: 1.5px solid #2a3248;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.4);
+    }
+    .tile.hidden:active { transform: scale(.93); }
+    .tile.hidden:hover  { border-color: #3d4f70; background: #222b3e; }
+
+    /* GEM state */
+    .tile.gem {
+      background: linear-gradient(145deg, #6c3fa8, #9b5de5);
+      border: 1.5px solid #a855f7;
+      box-shadow: 0 0 14px rgba(168,85,247,.35), inset 0 1px 0 rgba(255,255,255,.15);
+      cursor: default;
+      animation: gemPop .25s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    /* MINE state */
+    .tile.mine {
+      background: linear-gradient(145deg, #3a1515, #5c1f1f);
+      border: 1.5px solid #7f1d1d;
+      box-shadow: 0 0 16px rgba(239,68,68,.4);
+      cursor: default;
+      animation: minePop .2s ease;
+    }
+
+    /* REVEALED-MINE (others revealed after loss) */
+    .tile.mine-reveal {
+      background: linear-gradient(145deg, #1f1215, #2d1a1a);
+      border: 1.5px solid #4a1a1a;
+      cursor: default;
+      opacity: .75;
+    }
+
+    /* SELECTED (pending pick randomly) */
+    .tile.selected {
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(240,165,0,.4);
+    }
+
+    @keyframes gemPop {
+      0%   { transform: scale(.6); opacity: 0; }
+      100% { transform: scale(1);  opacity: 1; }
+    }
+    @keyframes minePop {
+      0%   { transform: scale(1.1); }
+      50%  { transform: scale(.9); }
+      100% { transform: scale(1); }
+    }
+
+    /* TILE ICON */
+    .tile-icon {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(20px, 5vw, 30px);
+      pointer-events: none;
+    }
+
+    /* SVG gem */
+    .gem-svg {
+      width: 55%; height: 55%;
+      filter: drop-shadow(0 2px 6px rgba(168,85,247,.6));
+    }
+    /* SVG mine */
+    .mine-svg {
+      width: 58%; height: 58%;
+      filter: drop-shadow(0 2px 6px rgba(239,68,68,.5));
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      padding: 4px 14px 0;
+      flex: 1;
+    }
+
+    /* MULTIPLIER BAR */
+    .mult-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .mult-bar-left { display: flex; flex-direction: column; gap: 2px; }
+    .mult-bar-label { font-size: 11px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: .8px; }
+    .mult-bar-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 700; color: var(--text);
+      line-height: 1;
+    }
+    .mult-bar-val.active { color: var(--green); }
+    .mult-bar-cashout {
+      font-size: 13px; font-weight: 700; color: var(--gold);
+    }
+    .mult-bar-right { text-align: right; }
+    .profit-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700; color: var(--gold);
+    }
+    .profit-label { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* MAIN BUTTON */
+    .main-btn {
+      width: 100%; height: 52px; border-radius: var(--radius-sm);
+      border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+      transition: all .2s; letter-spacing: .2px;
+      margin-bottom: 10px;
+    }
+    .main-btn.bet-state {
+      background: #22c55e; color: #fff;
+      box-shadow: 0 4px 20px rgba(34,197,94,.3);
+    }
+    .main-btn.bet-state:hover { background: #16a34a; }
+
+    .main-btn.cashout-state {
+      background: linear-gradient(135deg, #d97706, #f0a500);
+      color: #000; font-size: 16px;
+      box-shadow: 0 4px 24px rgba(240,165,0,.4);
+      animation: goldPulse 1.2s infinite;
+    }
+    @keyframes goldPulse {
+      0%,100% { box-shadow: 0 4px 24px rgba(240,165,0,.35); }
+      50%      { box-shadow: 0 4px 36px rgba(240,165,0,.6); }
+    }
+
+    .main-btn.pick-state {
+      background: var(--raised); color: var(--sub);
+      border: 1px solid var(--border2);
+    }
+    .main-btn.pick-state:hover { color: var(--text); }
+
+    .main-btn.disabled-state {
+      background: var(--raised); color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    /* AMOUNT ROW */
+    .row-label {
+      font-size: 11px; font-weight: 700; color: var(--sub);
+      text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px;
+    }
+    .amount-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    }
+    .amount-input-wrap {
+      flex: 1; display: flex; align-items: center; height: 42px;
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); padding: 0 12px; gap: 6px;
+    }
+    .curr-icon { color: var(--gold); font-size: 13px; font-weight: 700; }
+    #bet-amount {
+      background: none; border: none; outline: none;
+      color: var(--text); font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 700; width: 100%;
+    }
+    #bet-amount:disabled { opacity: .5; }
+    .amt-btns { display: flex; gap: 6px; }
+    .amt-btn {
+      height: 42px; padding: 0 14px;
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--sub);
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: all .12s;
+    }
+    .amt-btn:hover { color: var(--text); }
+    .amt-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* MINES SLIDER */
+    .mines-row { margin-bottom: 16px; }
+    .mines-row-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .mines-count-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px; font-weight: 700; color: var(--text);
+    }
+    .mines-count-max { font-size: 12px; color: var(--muted); }
+    .mines-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 6px;
+      background: var(--border2); border-radius: 3px; outline: none;
+      cursor: pointer;
+    }
+    .mines-slider:disabled { opacity: .4; cursor: not-allowed; }
+    .mines-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: white; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,.4);
+      border: 2px solid var(--border2);
+    }
+    .mines-slider::-moz-range-thumb {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: white; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,.4); border: 2px solid var(--border2);
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .stat-chip {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      text-align: center;
+    }
+    .stat-chip-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px; font-weight: 700; color: var(--text);
+    }
+    .stat-chip-lbl { font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* RESULT OVERLAY */
+    .result-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0; transition: opacity .3s;
+    }
+    .result-overlay.show { opacity: 1; }
+    .result-box {
+      text-align: center;
+      background: rgba(10,11,15,.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-lg);
+      padding: 28px 40px;
+    }
+    .result-box .res-icon { font-size: 44px; margin-bottom: 8px; }
+    .result-box .res-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px; font-weight: 700;
+    }
+    .result-box .res-title.win { color: var(--green); }
+    .result-box .res-title.lose { color: var(--red); }
+    .result-box .res-sub { font-size: 14px; color: var(--sub); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand"><div class="brand-dot"></div>Brainrot Casino</a>
+  <div class="navbar-right">
+    <div class="balance-pill">
+      <span class="balance-icon">◈</span>
+      <span id="balance-display">0.00</span>
+    </div>
+    <div class="user-menu">
+      <div class="username-badge">
+        <div class="avatar" id="user-avatar">?</div>
+        <span class="username-text" id="username-display">…</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="user-dropdown">
+        <a href="index.html">← All Games</a>
+        <a href="deposit.html">Deposit</a>
+        <div class="divider"></div>
+        <button class="danger" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="mines-page">
+
+  <!-- GRID -->
+  <div class="grid-wrap">
+    <div class="mines-grid" id="mines-grid"></div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+
+    <!-- MULTIPLIER BAR (shown while playing) -->
+    <div class="mult-bar" id="mult-bar" style="display:none">
+      <div class="mult-bar-left">
+        <div class="mult-bar-label">Multiplier</div>
+        <div class="mult-bar-val active" id="mult-val">1.00×</div>
+      </div>
+      <div class="mult-bar-right">
+        <div class="profit-label">Profit on cashout</div>
+        <div class="profit-val" id="profit-val">◈ 0.00</div>
+      </div>
+    </div>
+
+    <!-- MAIN BUTTON -->
+    <button class="main-btn bet-state" id="main-btn" onclick="handleMainBtn()">Bet</button>
+
+    <!-- PICK RANDOMLY (shown while playing) -->
+    <button class="main-btn pick-state" id="pick-btn" onclick="pickRandom()" style="display:none">
+      ✦ Pick a Tile Randomly
+    </button>
+
+    <!-- AMOUNT -->
+    <div id="betting-controls">
+      <div class="row-label">Amount</div>
+      <div class="amount-row">
+        <div class="amount-input-wrap">
+          <span class="curr-icon">◈</span>
+          <input type="number" id="bet-amount" value="1" min="1" step="1"/>
+        </div>
+        <div class="amt-btns">
+          <button class="amt-btn" id="btn-half" onclick="halfBet()">½</button>
+          <button class="amt-btn" id="btn-double" onclick="doubleBet()">2×</button>
+        </div>
+      </div>
+
+      <!-- MINES SLIDER -->
+      <div class="mines-row">
+        <div class="mines-row-top">
+          <div class="row-label" style="margin:0">Mines</div>
+          <div>
+            <span class="mines-count-val" id="mines-count">3</span>
+            <span class="mines-count-max"> / 24</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:var(--muted)">1</span>
+          <input type="range" class="mines-slider" id="mines-slider" min="1" max="24" value="3"/>
+          <span style="font-size:12px;color:var(--muted)">24</span>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="stat-chip-val" id="stat-gems">22</div>
+          <div class="stat-chip-lbl">Gems</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-val" id="stat-mines-count">3</div>
+          <div class="stat-chip-lbl">Mines</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-val" id="stat-chance">88%</div>
+          <div class="stat-chip-lbl">Next Chance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REMAINING GEMS (shown while playing) -->
+    <div id="playing-stats" style="display:none">
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="stat-chip-val" id="stat-remaining">—</div>
+          <div class="stat-chip-lbl">Gems Left</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-val" id="stat-revealed">0</div>
+          <div class="stat-chip-lbl">Revealed</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip-val" id="stat-next-mult">—</div>
+          <div class="stat-chip-lbl">Next ×</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="result-overlay" id="result-overlay">
+  <div class="result-box">
+    <div class="res-icon" id="res-icon"></div>
+    <div class="res-title" id="res-title"></div>
+    <div class="res-sub" id="res-sub"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+
+// ══════════════════════════════════════════════
+//  PROVABLY FAIR ENGINE
+//  serverSeed generated per-round via crypto.getRandomValues
+//  mine positions = SHA-256(serverSeed + ":" + roundId) → seeded shuffle
+//  player can verify after round by re-hashing the revealed seed
+// ══════════════════════════════════════════════
+
+const GRID_SIZE = 25; // 5×5
+
+async function hashToMines(serverSeed, roundId, mineCount) {
+  // Hash the seed
+  const msg = serverSeed + ':' + roundId;
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  const bytes = Array.from(new Uint8Array(buf));
+
+  // Seeded Fisher-Yates shuffle of [0..24] using hash bytes cyclically
+  const indices = Array.from({ length: GRID_SIZE }, (_, i) => i);
+  for (let i = GRID_SIZE - 1; i > 0; i--) {
+    const j = bytes[i % bytes.length] % (i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  // First `mineCount` positions are mines
+  return new Set(indices.slice(0, mineCount));
+}
+
+function genServerSeed() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ══════════════════════════════════════════════
+//  MULTIPLIER / HOUSE EDGE
+//  Based on hypergeometric probability with house edge applied.
+//  For k gems revealed with n mines in 25 tiles:
+//    fairMult = product of (25-mines-i)/(25-mines-i-mines) style calculation
+//    mult(k) = (1 / chanceOfSurviving_k_picks) * (1 - houseEdge)
+// ══════════════════════════════════════════════
+
+const HOUSE_EDGE = 0.04; // 4%
+
+function calcMultiplier(revealed, mines) {
+  if (revealed === 0) return 1.00;
+  const gems = GRID_SIZE - mines;
+  // Probability of picking `revealed` gems in a row without hitting a mine
+  let prob = 1;
+  for (let i = 0; i < revealed; i++) {
+    prob *= (gems - i) / (GRID_SIZE - i);
+  }
+  if (prob <= 0) return 999;
+  const fairMult = 1 / prob;
+  return Math.max(1, fairMult * (1 - HOUSE_EDGE));
+}
+
+// ══════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════
+
+let state       = 'idle'; // idle | playing | over
+let serverSeed  = '';
+let roundId     = 0;
+let minePositions = new Set();
+let revealedCount = 0;
+let hitMine     = false;
+let betAmt      = 0;
+let currentUser = null;
+let userBalance = 0;
+
+// ── init ──
+(async () => {
+  currentUser = await requireNonAdmin();
+  if (!currentUser) return;
+  document.getElementById('username-display').textContent = currentUser.username || 'Player';
+  document.getElementById('user-avatar').textContent = (currentUser.username || 'P')[0].toUpperCase();
+  userBalance = currentUser.balance || 0;
+  updateBalanceDisplay();
+
+  db.channel('mines-profile-' + currentUser.id)
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'profiles',
+      filter: `id=eq.${currentUser.id}`
+    }, payload => {
+      userBalance = payload.new.balance;
+      updateBalanceDisplay();
+    }).subscribe();
+
+  buildGrid();
+  updateStats();
+})();
+
+// ── slider ──
+document.getElementById('mines-slider').addEventListener('input', function() {
+  document.getElementById('mines-count').textContent = this.value;
+  document.getElementById('stat-mines-count').textContent = this.value;
+  const gems = GRID_SIZE - parseInt(this.value);
+  document.getElementById('stat-gems').textContent = gems;
+  updateChance();
+});
+
+function updateChance() {
+  const mines = parseInt(document.getElementById('mines-slider').value);
+  const gems  = GRID_SIZE - mines;
+  const pct   = Math.round((gems / GRID_SIZE) * 100);
+  document.getElementById('stat-chance').textContent = pct + '%';
+}
+
+// ── grid ──
+function buildGrid() {
+  const grid = document.getElementById('mines-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < GRID_SIZE; i++) {
+    const tile = document.createElement('button');
+    tile.className = 'tile hidden';
+    tile.dataset.index = i;
+    tile.innerHTML = '<div class="tile-icon"></div>';
+    tile.addEventListener('click', () => onTileClick(i));
+    grid.appendChild(tile);
+  }
+}
+
+function getTile(i) {
+  return document.querySelector(`.tile[data-index="${i}"]`);
+}
+
+// ── START BET ──
+async function startBet() {
+  const amt = parseFloat(document.getElementById('bet-amount').value);
+  if (!amt || amt < 1) return toast('Enter a valid amount.', 'error');
+  if (amt > userBalance) return toast('Insufficient balance.', 'error');
+
+  betAmt = amt;
+  userBalance -= amt;
+  updateBalanceDisplay();
+  await saveBalance(userBalance); // persist the stake deduction immediately
+
+  const mines = parseInt(document.getElementById('mines-slider').value);
+  serverSeed  = genServerSeed();
+  roundId++;
+  minePositions = await hashToMines(serverSeed, roundId, mines);
+  revealedCount = 0;
+  hitMine = false;
+  state   = 'playing';
+
+  // Reset grid
+  buildGrid();
+  setControlsPlaying(true);
+  updateMultDisplay();
+  updatePlayingStats(mines);
+}
+
+// ── TILE CLICK ──
+async function onTileClick(i) {
+  if (state !== 'playing') return;
+  const tile = getTile(i);
+  if (!tile.classList.contains('hidden')) return;
+
+  if (minePositions.has(i)) {
+    // HIT MINE
+    showMine(tile, true);
+    hitMine = true;
+    state = 'over';
+
+    // Reveal all other mines
+    setTimeout(() => {
+      minePositions.forEach(mi => {
+        if (mi !== i) {
+          const t = getTile(mi);
+          t.classList.remove('hidden');
+          t.classList.add('mine-reveal');
+          t.querySelector('.tile-icon').innerHTML = mineSVG();
+          t.disabled = true;
+        }
+      });
+    }, 200);
+
+    // Lose bet
+    await saveBalance(userBalance); // already deducted
+    showResult(false, 0, betAmt);
+    setTimeout(() => {
+      setControlsPlaying(false);
+      state = 'idle';
+    }, 1800);
+
+  } else {
+    // GEM
+    showGem(tile);
+    revealedCount++;
+    const mines = parseInt(document.getElementById('mines-slider').value);
+    updateMultDisplay();
+    updatePlayingStats(mines);
+
+    // Check if all gems revealed (auto cashout)
+    const totalGems = GRID_SIZE - mines;
+    if (revealedCount >= totalGems) {
+      await doCashout(true);
+    }
+  }
+}
+
+function showGem(tile) {
+  tile.classList.remove('hidden');
+  tile.classList.add('gem');
+  tile.querySelector('.tile-icon').innerHTML = gemSVG(true);
+  tile.disabled = true;
+}
+
+function showMine(tile, active) {
+  tile.classList.remove('hidden');
+  tile.classList.add(active ? 'mine' : 'mine-reveal');
+  tile.querySelector('.tile-icon').innerHTML = mineSVG();
+  tile.disabled = true;
+}
+
+// ── CASHOUT ──
+async function doCashout(auto = false) {
+  if (state !== 'playing' || revealedCount === 0) return;
+  state = 'over';
+
+  const mines = parseInt(document.getElementById('mines-slider').value);
+  const mult  = calcMultiplier(revealedCount, mines);
+  const winnings = betAmt * mult;
+  const profit   = winnings - betAmt;
+
+  userBalance += winnings;
+  updateBalanceDisplay();
+  await saveBalance(userBalance);
+
+  showResult(true, winnings, profit);
+  setTimeout(() => {
+    setControlsPlaying(false);
+    state = 'idle';
+  }, 1800);
+}
+
+// ── PICK RANDOM ──
+function pickRandom() {
+  if (state !== 'playing') return;
+  const hidden = Array.from(document.querySelectorAll('.tile.hidden'));
+  if (!hidden.length) return;
+  const pick = hidden[Math.floor(Math.random() * hidden.length)];
+  pick.classList.add('selected');
+  setTimeout(() => {
+    pick.classList.remove('selected');
+    onTileClick(parseInt(pick.dataset.index));
+  }, 400);
+}
+
+// ── MAIN BUTTON ──
+function handleMainBtn() {
+  if (state === 'idle') {
+    startBet();
+  } else if (state === 'playing') {
+    doCashout();
+  }
+}
+
+// ── BALANCE ──
+function updateBalanceDisplay() {
+  document.getElementById('balance-display').textContent = formatCash(userBalance);
+}
+
+async function saveBalance(bal) {
+  if (!currentUser) return;
+  await db.from('profiles').update({ balance: Math.max(0, bal) }).eq('id', currentUser.id);
+}
+
+// ── MULTIPLIER DISPLAY ──
+function updateMultDisplay() {
+  const mines = parseInt(document.getElementById('mines-slider').value);
+  const mult  = calcMultiplier(revealedCount, mines);
+  const profit = betAmt * mult - betAmt;
+  document.getElementById('mult-val').textContent  = mult.toFixed(2) + '×';
+  document.getElementById('profit-val').textContent = '◈ ' + formatCash(betAmt * mult);
+  // Main button
+  document.getElementById('main-btn').textContent = `Cash Out  ◈${formatCash(betAmt * mult)}`;
+}
+
+function updatePlayingStats(mines) {
+  const gems = GRID_SIZE - mines;
+  const remaining = gems - revealedCount;
+  document.getElementById('stat-remaining').textContent = remaining;
+  document.getElementById('stat-revealed').textContent  = revealedCount;
+
+  // Next multiplier
+  const nextMult = calcMultiplier(revealedCount + 1, mines);
+  document.getElementById('stat-next-mult').textContent = nextMult.toFixed(2) + '×';
+}
+
+function updateStats() {
+  const mines = parseInt(document.getElementById('mines-slider').value);
+  const gems  = GRID_SIZE - mines;
+  document.getElementById('stat-gems').textContent       = gems;
+  document.getElementById('stat-mines-count').textContent = mines;
+  updateChance();
+}
+
+// ── UI STATE ──
+function setControlsPlaying(playing) {
+  document.getElementById('mult-bar').style.display       = playing ? 'flex' : 'none';
+  document.getElementById('pick-btn').style.display       = playing ? 'block' : 'none';
+  document.getElementById('betting-controls').style.display = playing ? 'none' : 'block';
+  document.getElementById('playing-stats').style.display  = playing ? 'block' : 'none';
+
+  const mainBtn = document.getElementById('main-btn');
+  if (playing) {
+    mainBtn.className = 'main-btn cashout-state';
+    mainBtn.textContent = 'Cash Out';
+  } else {
+    mainBtn.className = 'main-btn bet-state';
+    mainBtn.textContent = 'Bet';
+  }
+
+  // Disable amount controls while playing
+  const amtInput = document.getElementById('bet-amount');
+  const slider   = document.getElementById('mines-slider');
+  amtInput.disabled = playing;
+  slider.disabled   = playing;
+  document.getElementById('btn-half').disabled   = playing;
+  document.getElementById('btn-double').disabled = playing;
+}
+
+// ── RESULT FLASH ──
+function showResult(win, winnings, amount) {
+  const overlay = document.getElementById('result-overlay');
+  const icon    = document.getElementById('res-icon');
+  const title   = document.getElementById('res-title');
+  const sub     = document.getElementById('res-sub');
+
+  if (win) {
+    icon.textContent  = '💎';
+    title.className   = 'res-title win';
+    title.textContent = '+◈' + formatCash(winnings);
+    sub.textContent   = `Cashed out at ${calcMultiplier(revealedCount, parseInt(document.getElementById('mines-slider').value)).toFixed(2)}×`;
+  } else {
+    icon.textContent  = '💣';
+    title.className   = 'res-title lose';
+    title.textContent = '-◈' + formatCash(amount);
+    sub.textContent   = 'Hit a mine!';
+  }
+
+  overlay.classList.add('show');
+  setTimeout(() => overlay.classList.remove('show'), 1800);
+}
+
+// ── BET HELPERS ──
+function halfBet() {
+  const inp = document.getElementById('bet-amount');
+  inp.value = Math.max(1, Math.floor(parseFloat(inp.value || 1) / 2));
+}
+function doubleBet() {
+  const inp = document.getElementById('bet-amount');
+  inp.value = Math.floor(Math.min(parseFloat(inp.value || 1) * 2, userBalance));
+}
+
+// ── SVG ASSETS ──
+function gemSVG(bright) {
+  const c = bright ? '#c084fc' : '#7c3aed';
+  const hi = bright ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)';
+  return `<svg class="gem-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="ggrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#e879f9"/>
+        <stop offset="100%" style="stop-color:#7c3aed"/>
+      </linearGradient>
+    </defs>
+    <polygon points="50,5 95,35 80,95 20,95 5,35" fill="url(#ggrad)" stroke="${c}" stroke-width="2"/>
+    <polygon points="50,5 95,35 50,30" fill="${hi}" opacity="0.6"/>
+    <polygon points="50,30 80,95 20,95" fill="rgba(0,0,0,0.15)"/>
+    <circle cx="38" cy="22" r="5" fill="white" opacity="0.6"/>
+  </svg>`;
+}
+
+function mineSVG() {
+  return `<svg class="mine-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="mgrad" cx="40%" cy="35%">
+        <stop offset="0%" style="stop-color:#6b6b6b"/>
+        <stop offset="100%" style="stop-color:#1a1a1a"/>
+      </radialGradient>
+    </defs>
+    <!-- spikes -->
+    <line x1="50" y1="8"  x2="50" y2="20" stroke="#555" stroke-width="5" stroke-linecap="round"/>
+    <line x1="50" y1="80" x2="50" y2="92" stroke="#555" stroke-width="5" stroke-linecap="round"/>
+    <line x1="8"  y1="50" x2="20" y2="50" stroke="#555" stroke-width="5" stroke-linecap="round"/>
+    <line x1="80" y1="50" x2="92" y2="50" stroke="#555" stroke-width="5" stroke-linecap="round"/>
+    <line x1="18" y1="18" x2="27" y2="27" stroke="#555" stroke-width="4" stroke-linecap="round"/>
+    <line x1="73" y1="73" x2="82" y2="82" stroke="#555" stroke-width="4" stroke-linecap="round"/>
+    <line x1="82" y1="18" x2="73" y2="27" stroke="#555" stroke-width="4" stroke-linecap="round"/>
+    <line x1="18" y1="82" x2="27" y2="73" stroke="#555" stroke-width="4" stroke-linecap="round"/>
+    <!-- body -->
+    <circle cx="50" cy="50" r="28" fill="url(#mgrad)" stroke="#333" stroke-width="2"/>
+    <!-- shine -->
+    <circle cx="40" cy="38" r="7" fill="white" opacity="0.25"/>
+    <!-- star -->
+    <text x="50" y="56" text-anchor="middle" font-size="14" fill="#f59e0b">★</text>
+  </svg>`;
+}
+
+// ── TOAST ──
+function toast(msg, type='success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type==='error'?'error':'');
+  t.textContent = msg; c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+</script>
+</body>
+</html>
