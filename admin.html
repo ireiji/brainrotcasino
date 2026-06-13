@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Brainrot Casino</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .admin-bar {
+      height: 3px; background: linear-gradient(90deg, var(--blue), #7c3aed);
+    }
+    .page-header { padding: 28px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+    .page-header h1 { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:700; color:var(--text); }
+    .page-header p { font-size:13px; color:var(--sub); margin-top:2px; }
+
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; margin-bottom: 28px;
+    }
+    .strip-cell { background: var(--surface); padding: 16px 20px; }
+    .strip-val { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700; color:var(--text); }
+    .strip-lbl { font-size:11px; color:var(--sub); margin-top:2px; text-transform:uppercase; letter-spacing:.5px; }
+
+    /* TABS */
+    .admin-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:24px; }
+    .admin-tab {
+      padding:10px 0; margin-right:24px;
+      background:none; border:none; color:var(--sub);
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
+      cursor:pointer; border-bottom:2px solid transparent;
+      margin-bottom:-1px; transition:all .15s;
+    }
+    .admin-tab.active { color:var(--text); border-bottom-color:var(--blue); }
+
+    /* FILTER PILLS */
+    .filter-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+    .filter-pill {
+      padding:5px 14px; border-radius:999px;
+      background:var(--raised); border:1px solid var(--border2);
+      color:var(--sub); font-size:12px; font-weight:600;
+      cursor:pointer; transition:all .15s;
+      font-family:'Inter',sans-serif;
+    }
+    .filter-pill.active { background:var(--blue-dim); border-color:rgba(61,124,255,.35); color:var(--blue); }
+
+    /* TABLES */
+    .data-table { width:100%; border-collapse:collapse; }
+    .data-table th {
+      text-align:left; padding:10px 14px;
+      font-size:11px; font-weight:700;
+      text-transform:uppercase; letter-spacing:.8px;
+      color:var(--sub); border-bottom:1px solid var(--border);
+    }
+    .data-table td {
+      padding:12px 14px; font-size:13px;
+      border-bottom:1px solid var(--border);
+      vertical-align:middle;
+    }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:rgba(255,255,255,.015); }
+
+    .action-row { display:flex; gap:6px; flex-wrap:wrap; }
+    .btn-xs {
+      padding:4px 10px; font-size:11px; border-radius:4px;
+      font-weight:700; cursor:pointer; border:none;
+      font-family:'Inter',sans-serif; transition:all .15s; line-height:1.4;
+    }
+    .bx-schedule { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(61,124,255,.25); }
+    .bx-schedule:hover { background:rgba(61,124,255,.2); }
+    .bx-confirm  { background:rgba(34,197,94,.12); color:var(--green); border:1px solid rgba(34,197,94,.25); }
+    .bx-confirm:hover { background:rgba(34,197,94,.2); }
+    .bx-reject   { background:rgba(239,68,68,.08); color:var(--red); border:1px solid rgba(239,68,68,.2); }
+    .bx-reject:hover { background:rgba(239,68,68,.15); }
+    .bx-adjust   { background:var(--gold-dim); color:var(--gold); border:1px solid rgba(240,165,0,.25); }
+    .bx-adjust:hover { background:rgba(240,165,0,.2); }
+    .bx-promote  { background:rgba(167,139,250,.1); color:#a78bfa; border:1px solid rgba(167,139,250,.25); }
+    .bx-promote:hover { background:rgba(167,139,250,.18); }
+
+    .role-admin { color:#a78bfa; font-weight:700; }
+    .role-user  { color:var(--sub); }
+    .empty-msg  { text-align:center; padding:40px; color:var(--muted); font-size:13px; }
+
+    .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow-x:auto; }
+  </style>
+</head>
+<body>
+<div class="admin-bar"></div>
+
+<nav class="navbar">
+  <a href="admin.html" class="navbar-brand" style="color:var(--text)">
+    <div class="brand-dot" style="background:#a78bfa;box-shadow:0 0 8px #a78bfa"></div>
+    Admin Panel
+  </a>
+  <div class="navbar-right">
+    <div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:#a78bfa;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.5px">ADMIN</div>
+    <div class="user-menu">
+      <div class="username-badge">
+        <div class="avatar" style="background:#7c3aed" id="user-avatar">A</div>
+        <span class="username-text" id="username-display">Admin</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="user-dropdown">
+        <button class="danger" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <p>Manage deposit applications, users, and balances.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="strip-cell"><div class="strip-val" id="stat-users">—</div><div class="strip-lbl">Total Users</div></div>
+    <div class="strip-cell"><div class="strip-val" id="stat-pending">—</div><div class="strip-lbl">Pending</div></div>
+    <div class="strip-cell"><div class="strip-val" id="stat-scheduled">—</div><div class="strip-lbl">Scheduled</div></div>
+    <div class="strip-cell"><div class="strip-val" id="stat-approved">—</div><div class="strip-lbl">Approved</div></div>
+    <div class="strip-cell"><div class="strip-val" id="stat-deposited">—</div><div class="strip-lbl">Total Deposited</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="deposits">Deposit Applications</button>
+    <button class="admin-tab" data-tab="users">Users</button>
+  </div>
+
+  <!-- DEPOSITS -->
+  <div id="tab-deposits">
+    <div class="filter-row">
+      <button class="filter-pill active" onclick="filterApps('all',this)">All</button>
+      <button class="filter-pill" onclick="filterApps('pending',this)">Pending</button>
+      <button class="filter-pill" onclick="filterApps('scheduled',this)">Scheduled</button>
+      <button class="filter-pill" onclick="filterApps('approved',this)">Approved</button>
+      <button class="filter-pill" onclick="filterApps('rejected',this)">Rejected</button>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th><th>Roblox</th><th>Brainrots</th>
+            <th>Value</th><th>Status</th><th>Scheduled</th><th>Date</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="app-tbody"><tr><td colspan="8" class="empty-msg">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="tab-users" style="display:none">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Username</th><th>Email</th><th>Role</th><th>Balance</th><th>Joined</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="user-tbody"><tr><td colspan="6" class="empty-msg">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULE MODAL -->
+<div class="modal-overlay" id="modal-schedule">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-schedule')">✕</button>
+    <div class="modal-title">Schedule Deposit</div>
+    <div class="form-group"><label class="form-label">Date & Time</label><input type="datetime-local" class="form-input" id="schedule-datetime"/></div>
+    <div class="form-group"><label class="form-label">Note for user</label><textarea class="form-input" id="schedule-note" rows="2" placeholder="e.g. I'll send the trade at this time. Be online!"></textarea></div>
+    <button class="btn btn-primary w-full mt-8" onclick="confirmSchedule()">Set Schedule</button>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal-overlay" id="modal-reject">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-reject')">✕</button>
+    <div class="modal-title">Reject Application</div>
+    <div class="form-group"><label class="form-label">Reason (shown to user)</label><textarea class="form-input" id="reject-note" rows="2" placeholder="e.g. Brainrot not recognized."></textarea></div>
+    <button class="btn btn-danger w-full mt-8" onclick="confirmReject()">Reject</button>
+  </div>
+</div>
+
+<!-- ADJUST MODAL -->
+<div class="modal-overlay" id="modal-adjust">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-adjust')">✕</button>
+    <div class="modal-title">Adjust Balance</div>
+    <div class="form-group"><label class="form-label">New Balance</label><input type="number" class="form-input" id="adjust-amount" min="0" step="0.01" placeholder="0.00"/></div>
+    <button class="btn btn-primary w-full mt-8" onclick="confirmAdjust()">Update Balance</button>
+  </div>
+</div>
+
+<!-- CONFIRM CREDIT MODAL -->
+<div class="modal-overlay" id="modal-confirm-credit">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-confirm-credit')">✕</button>
+    <div class="modal-title">Confirm Deposit — Credit User</div>
+    <div class="form-group">
+      <label class="form-label">Credit (◈)</label>
+      <input type="number" class="form-input" id="confirm-credit-amount" min="0" step="0.01" />
+    </div>
+    <div class="form-group"><label class="form-label">Note (optional)</label><input type="text" class="form-input" id="confirm-credit-note" placeholder="Optional admin note" /></div>
+    <button class="btn btn-primary w-full mt-8" onclick="confirmDepositAction()">Confirm Credit</button>
+  </div>
+</div>
+
+<!-- PROMOTE (MAKE ADMIN) MODAL -->
+<div class="modal-overlay" id="modal-promote">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-promote')">✕</button>
+    <div class="modal-title">Promote to Admin</div>
+    <div class="form-group">
+      <label class="form-label">Credit to give (optional, ◈)</label>
+      <input type="number" class="form-input" id="promote-credit-amount" min="0" step="0.01" value="0" />
+    </div>
+    <div class="form-group"><label class="form-label">Message (optional)</label><input type="text" class="form-input" id="promote-credit-note" placeholder="Optional admin note" /></div>
+    <button class="btn btn-primary w-full mt-8" onclick="confirmPromoteAction()">Promote & Credit</button>
+  </div>
+</div>
+<div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  const BRAINROT_NAMES = {
+    skibidi:'Skibidi Toilet',rizz:'Rizz Lord',sigma:'Sigma Wolf',
+    fanum:'Fanum Tax',gyatt:'Gyatt Goblin',ohio:'Ohio Final Boss',
+    npc:'NPC Syndrome',delulu:'Delulu Dragon',mewing:'Mewing Master',
+    grimace:'Grimace Shake',ohnomyword:'Oh No My Word',looksmaxxer:'Looksmaxxer'
+  };
+  let allApps=[], currentFilter='all', activeAppId=null, activeUserId=null;
+
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const name = tab.dataset.tab;
+      document.getElementById('tab-deposits').style.display = name==='deposits'?'block':'none';
+      document.getElementById('tab-users').style.display = name==='users'?'block':'none';
+      if (name==='users') loadUsers();
+    });
+  });
+
+  function toast(msg,type='success') {
+    const c=document.getElementById('toast-container');
+    const t=document.createElement('div');
+    t.className='toast '+(type==='error'?'error':type==='info'?'info':'');
+    t.textContent=msg; c.appendChild(t); setTimeout(()=>t.remove(),3500);
+  }
+  function openModal(id){document.getElementById(id).classList.add('open');}
+  function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+  document.querySelectorAll('.modal-overlay').forEach(o=>{
+    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  });
+
+  async function loadApplications() {
+    const {data,error} = await db.from('deposit_applications')
+      .select('*, profiles:user_id(username)')
+      .order('created_at',{ascending:false});
+    if(error){console.error(error);return;}
+    allApps=data||[]; renderApps(); updateStats();
+  }
+
+  function filterApps(f,btn) {
+    currentFilter=f;
+    document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    renderApps();
+  }
+
+  function renderApps() {
+    const apps = currentFilter==='all' ? allApps : allApps.filter(a=>a.status===currentFilter);
+    const tbody = document.getElementById('app-tbody');
+    if(!apps.length){tbody.innerHTML=`<tr><td colspan="8" class="empty-msg">No applications found.</td></tr>`;return;}
+    tbody.innerHTML = apps.map(app => {
+      const items = (app.items||[]).map(i=>`${i.qty}× ${BRAINROT_NAMES[i.id]||i.id}`).join(', ');
+      const sched = app.scheduled_at ? new Date(app.scheduled_at).toLocaleString() : '—';
+      const user  = app.profiles?.username || app.user_id.slice(0,8);
+      let actions = '';
+      if(app.status==='pending') {
+        actions=`<button class="btn-xs bx-schedule" onclick="openScheduleModal('${app.id}')">Schedule</button>
+                 <button class="btn-xs bx-reject" onclick="openRejectModal('${app.id}')">Reject</button>`;
+      } else if(app.status==='scheduled') {
+        actions=`<button class="btn-xs bx-confirm" onclick="openConfirmDeposit('${app.id}', ${app.estimated_value}, '${app.user_id}')">Confirm</button>
+                 <button class="btn-xs bx-reject" onclick="openRejectModal('${app.id}')">Reject</button>`;
+      }
+      return `<tr>
+        <td><strong>${user}</strong></td>
+        <td>${app.roblox_username}</td>
+        <td style="max-width:180px;color:var(--sub);font-size:12px">${items}</td>
+        <td style="font-weight:700;color:var(--gold)">◈ ${formatCash(app.estimated_value)}</td>
+        <td><span class="badge badge-${app.status}">${app.status}</span></td>
+        <td style="font-size:12px;color:var(--sub)">${sched}</td>
+        <td style="font-size:12px;color:var(--muted)">${new Date(app.created_at).toLocaleDateString()}</td>
+        <td><div class="action-row">${actions||'<span style="color:var(--muted);font-size:12px">—</span>'}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateStats() {
+    const pending   = allApps.filter(a=>a.status==='pending').length;
+    const scheduled = allApps.filter(a=>a.status==='scheduled').length;
+    const approved  = allApps.filter(a=>a.status==='approved').length;
+    const total     = allApps.filter(a=>a.status==='approved').reduce((s,a)=>s+(a.estimated_value||0),0);
+    document.getElementById('stat-pending').textContent   = pending;
+    document.getElementById('stat-scheduled').textContent = scheduled;
+    document.getElementById('stat-approved').textContent  = approved;
+    document.getElementById('stat-deposited').textContent = '◈ '+formatCash(total);
+  }
+
+  function openScheduleModal(id){activeAppId=id;openModal('modal-schedule');}
+  async function confirmSchedule() {
+    const dt=document.getElementById('schedule-datetime').value;
+    const note=document.getElementById('schedule-note').value.trim();
+    if(!dt) return toast('Pick a date/time.','error');
+    const {error}=await db.from('deposit_applications').update({
+      status:'scheduled', scheduled_at:new Date(dt).toISOString(), admin_note:note||null
+    }).eq('id',activeAppId);
+    if(error) return toast('Error: '+error.message,'error');
+    toast('Scheduled!'); closeModal('modal-schedule'); loadApplications();
+  }
+
+  function openRejectModal(id){activeAppId=id;openModal('modal-reject');}
+  async function confirmReject() {
+    const note=document.getElementById('reject-note').value.trim();
+    const {error}=await db.from('deposit_applications').update({
+      status:'rejected', admin_note:note||null
+    }).eq('id',activeAppId);
+    if(error) return toast('Error: '+error.message,'error');
+    toast('Rejected.'); closeModal('modal-reject'); loadApplications();
+  }
+
+  // Open confirm credit modal (replaces browser confirm)
+  function openConfirmDeposit(appId, amount, userId) {
+    activeAppId = appId;
+    activeUserId = userId;
+    document.getElementById('confirm-credit-amount').value = (amount || 0);
+    document.getElementById('confirm-credit-note').value = '';
+    openModal('modal-confirm-credit');
+  }
+
+  async function confirmDepositAction() {
+    const raw = parseFloat(document.getElementById('confirm-credit-amount').value);
+    const amount = isNaN(raw) ? 0 : raw;
+    if(amount < 0) return toast('Invalid amount.','error');
+    const note = document.getElementById('confirm-credit-note').value.trim() || null;
+
+    // credit user
+    const {data:prof, error:pe} = await db.from('profiles').select('balance').eq('id', activeUserId).single();
+    if(pe) return toast('Error: '+pe.message,'error');
+    const newBal = (prof.balance||0) + amount;
+    const {error:ue} = await db.from('profiles').update({balance:newBal}).eq('id', activeUserId);
+    if(ue) return toast('Error: '+ue.message,'error');
+
+    // mark application approved
+    const {error:ae} = await db.from('deposit_applications').update({status:'approved', admin_note: note}).eq('id', activeAppId);
+    if(ae) return toast('Error: '+ae.message,'error');
+
+    toast(`Deposit confirmed. ◈${formatCash(amount)} credited.`);
+    closeModal('modal-confirm-credit');
+    loadApplications();
+  }
+
+  async function loadUsers() {
+    const {data,error}=await db.from('profiles').select('*').order('created_at',{ascending:false});
+    if(error){console.error(error);return;}
+    document.getElementById('stat-users').textContent=data?.length??'—';
+    const tbody=document.getElementById('user-tbody');
+    if(!data?.length){tbody.innerHTML=`<tr><td colspan="6" class="empty-msg">No users.</td></tr>`;return;}
+    tbody.innerHTML=data.map(u=>`<tr>
+      <td><strong>${u.username||'—'}</strong></td>
+      <td style="color:var(--sub);font-size:12px">${u.email||'—'}</td>
+      <td><span class="${u.role==='admin'?'role-admin':'role-user'}">${u.role||'user'}</span></td>
+      <td style="font-weight:700;color:var(--gold)">◈ ${formatCash(u.balance)}</td>
+      <td style="color:var(--muted);font-size:12px">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td><div class="action-row">
+        <button class="btn-xs bx-adjust" onclick="openAdjustModal('${u.id}',${u.balance||0})">Adjust</button>
+        ${u.role!=='admin'?`<button class="btn-xs bx-promote" onclick="openPromoteModal('${u.id}')">Make Admin</button>`:''}
+      </div></td>
+    </tr>`).join('');
+  }
+
+  function openAdjustModal(id,bal){activeUserId=id;document.getElementById('adjust-amount').value=bal;openModal('modal-adjust');}
+  async function confirmAdjust() {
+    const amt=parseFloat(document.getElementById('adjust-amount').value);
+    if(isNaN(amt)||amt<0) return toast('Invalid amount.','error');
+    const {error}=await db.from('profiles').update({balance:amt}).eq('id',activeUserId);
+    if(error) return toast('Error: '+error.message,'error');
+    toast('Balance updated.'); closeModal('modal-adjust'); loadUsers();
+  }
+
+  // Open promote modal (replace browser confirm)
+  function openPromoteModal(id) {
+    activeUserId = id;
+    document.getElementById('promote-credit-amount').value = 0;
+    document.getElementById('promote-credit-note').value = '';
+    openModal('modal-promote');
+  }
+
+  async function confirmPromoteAction() {
+    const raw = parseFloat(document.getElementById('promote-credit-amount').value);
+    const credit = isNaN(raw) ? 0 : raw;
+    const note = document.getElementById('promote-credit-note').value.trim() || null;
+
+    // fetch current balance
+    const {data:prof, error:pe} = await db.from('profiles').select('balance').eq('id', activeUserId).single();
+    if(pe) return toast('Error: '+pe.message,'error');
+    const newBal = (prof.balance||0) + (credit || 0);
+
+    const {error} = await db.from('profiles').update({role:'admin', balance: newBal}).eq('id', activeUserId);
+    if(error) return toast('Error: '+error.message,'error');
+
+    // Optionally log admin note somewhere; for now we just show toast
+    toast('User promoted to admin.');
+    closeModal('modal-promote');
+    loadUsers();
+  }
+
+  (async()=>{
+    const user=await requireAdmin();
+    if(!user) return;
+    document.getElementById('username-display').textContent=user.username||'Admin';
+    document.getElementById('user-avatar').textContent=(user.username||'A')[0].toUpperCase();
+    await loadApplications();
+    db.channel('admin-apps')
+      .on('postgres_changes',{event:'*',schema:'public',table:'deposit_applications'},()=>loadApplications())
+      .subscribe();
+  })();
+</script>
+</body>
+</html>

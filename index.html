@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Brainrot Casino</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* HERO */
+    .hero {
+      padding: 48px 0 40px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--blue-dim); border: 1px solid rgba(61,124,255,.2);
+      border-radius: 999px; padding: 3px 12px;
+      font-size: 11px; font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--blue); animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: .4; }
+    }
+    .hero-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(44px, 8vw, 80px);
+      font-weight: 700; line-height: .95;
+      color: var(--text); margin-bottom: 16px;
+      letter-spacing: -.5px;
+    }
+    .hero-title .accent { color: var(--blue); }
+    .hero-sub {
+      font-size: 15px; color: var(--sub);
+      max-width: 420px; margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .hero-stats {
+      display: flex; gap: 32px; flex-wrap: wrap;
+    }
+    .hstat { display: flex; flex-direction: column; gap: 2px; }
+    .hstat-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px; font-weight: 700; color: var(--text);
+    }
+    .hstat-lbl { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: .8px; }
+
+    /* GAME GRID */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+    }
+    .game-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      text-decoration: none; color: inherit;
+      display: flex; flex-direction: column;
+      transition: border-color .2s, transform .2s;
+      position: relative;
+    }
+    .game-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+    .game-card:hover .game-arrow { color: var(--blue); }
+
+    .game-thumb {
+      height: 110px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; position: relative;
+    }
+    .game-thumb-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, var(--surface));
+    }
+
+    .thumb-crash  { background: linear-gradient(135deg, #0d0620, #1a0840); }
+    .thumb-dice   { background: linear-gradient(135deg, #060d20, #0a1f40); }
+    .thumb-mines  { background: linear-gradient(135deg, #060e08, #0c2010); }
+    .thumb-plinko { background: linear-gradient(135deg, #12090d, #280d1a); }
+    .thumb-twist  { background: linear-gradient(135deg, #0a0c1a, #141a38); }
+
+    .game-body { padding: 14px; flex: 1; }
+    .game-name {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      margin-bottom: 3px;
+    }
+    .game-desc { font-size: 12px; color: var(--sub); line-height: 1.5; }
+    .game-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .game-tag {
+      font-size: 11px; font-weight: 600;
+      color: var(--sub); text-transform: uppercase; letter-spacing: .5px;
+    }
+    .game-arrow { font-size: 13px; color: var(--muted); transition: color .15s; }
+
+    /* HOT badge */
+    .game-hot {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3);
+      color: var(--red); border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; text-transform: uppercase; letter-spacing: .5px;
+      z-index: 1;
+    }
+
+    /* QUICK STATS ROW */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .strip-cell {
+      background: var(--surface);
+      padding: 16px 20px;
+    }
+    .strip-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700; color: var(--text);
+    }
+    .strip-lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+    /* SHOP PREVIEW */
+    .shop-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .shop-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 16px;
+      text-align: center; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      transition: border-color .2s, transform .2s;
+    }
+    .shop-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .shop-icon { font-size: 36px; }
+    .shop-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .shop-price { font-size: 12px; color: var(--gold); font-weight: 700; }
+
+    /* SECTION HEADER ROW */
+    .sec-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">
+    <div class="brand-dot"></div>
+    Brainrot Casino
+  </a>
+  <div class="navbar-right">
+    <div class="balance-pill">
+      <span class="balance-icon">◈</span>
+      <span id="balance-display">0.00</span>
+    </div>
+    <a href="deposit.html" class="btn-deposit" title="Deposit funds">+</a>
+    <div class="user-menu">
+      <div class="username-badge">
+        <div class="avatar" id="user-avatar">?</div>
+        <span class="username-text" id="username-display">Loading…</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="user-dropdown">
+        <a href="deposit.html">💸 Deposit</a>
+        <a href="shop.html">🛍 Shop</a>
+        <div class="divider"></div>
+        <button class="danger" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow"><div class="dot"></div> Live Now</div>
+    <h1 class="hero-title">Play smarter.<br/><span class="accent">Win bigger.</span></h1>
+    <p class="hero-sub">Deposit your Roblox brainrots and bet across 5 provably fair casino games.</p>
+    <div class="hero-stats">
+      <div class="hstat">
+        <div class="hstat-val" id="stat-players">—</div>
+        <div class="hstat-lbl">Players</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-val">5</div>
+        <div class="hstat-lbl">Games</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-val text-gold" id="stat-bal">—</div>
+        <div class="hstat-lbl">Your Balance</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAMES -->
+  <div class="sec-row">
+    <div class="section-label">Games</div>
+  </div>
+  <div class="games-grid mb-24">
+
+    <a href="crash.html" class="game-card">
+      <div class="game-hot">HOT</div>
+      <div class="game-thumb thumb-crash">🚀<div class="game-thumb-overlay"></div></div>
+      <div class="game-body">
+        <div class="game-name">Crash</div>
+        <div class="game-desc">Ride the multiplier and cash out before it crashes.</div>
+      </div>
+      <div class="game-footer">
+        <span class="game-tag">Multiplier</span>
+        <span class="game-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="colordice.html" class="game-card">
+      <div class="game-thumb thumb-dice">🎲<div class="game-thumb-overlay"></div></div>
+      <div class="game-body">
+        <div class="game-name">Color Dice</div>
+        <div class="game-desc">Pick a color, roll the dice, triple your stake.</div>
+      </div>
+      <div class="game-footer">
+        <span class="game-tag">Dice</span>
+        <span class="game-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="mines.html" class="game-card">
+      <div class="game-thumb thumb-mines">💎<div class="game-thumb-overlay"></div></div>
+      <div class="game-body">
+        <div class="game-name">Mines</div>
+        <div class="game-desc">Reveal gems, avoid mines. Cash out any time.</div>
+      </div>
+      <div class="game-footer">
+        <span class="game-tag">Strategy</span>
+        <span class="game-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="plinko.html" class="game-card">
+      <div class="game-thumb thumb-plinko">⬤<div class="game-thumb-overlay"></div></div>
+      <div class="game-body">
+        <div class="game-name">Plinko</div>
+        <div class="game-desc">Drop a ball and watch it bounce toward your prize.</div>
+      </div>
+      <div class="game-footer">
+        <span class="game-tag">Drop</span>
+        <span class="game-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="twist.html" class="game-card">
+      <div class="game-thumb thumb-twist">◎<div class="game-thumb-overlay"></div></div>
+      <div class="game-body">
+        <div class="game-name">Twist</div>
+        <div class="game-desc">Spin the wheel and land on your multiplier.</div>
+      </div>
+      <div class="game-footer">
+        <span class="game-tag">Wheel</span>
+        <span class="game-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- SHOP PREVIEW -->
+  <div class="sec-row mt-32">
+    <div class="section-label">Shop</div>
+    <a href="shop.html" class="btn btn-ghost" style="padding:6px 14px;font-size:12px">View all →</a>
+  </div>
+  <div class="shop-row">
+    <a href="shop.html" class="shop-card">
+      <div class="shop-icon">📦</div>
+      <div class="shop-name">Mystery Box</div>
+      <div class="shop-price">◈ 500</div>
+    </a>
+    <a href="shop.html" class="shop-card">
+      <div class="shop-icon">🌟</div>
+      <div class="shop-name">Rare Lootbox</div>
+      <div class="shop-price">◈ 1,500</div>
+    </a>
+    <a href="shop.html" class="shop-card">
+      <div class="shop-icon">💎</div>
+      <div class="shop-name">Legendary Crate</div>
+      <div class="shop-price">◈ 5,000</div>
+    </a>
+    <a href="shop.html" class="shop-card">
+      <div class="shop-icon">🎁</div>
+      <div class="shop-name">Brainrot Bundle</div>
+      <div class="shop-price">◈ 2,000</div>
+    </a>
+  </div>
+
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  (async () => {
+    const user = await requireNonAdmin();
+    if (!user) return;
+    document.getElementById('username-display').textContent = user.username || 'Player';
+    document.getElementById('user-avatar').textContent = (user.username || 'P')[0].toUpperCase();
+    document.getElementById('balance-display').textContent = formatCash(user.balance);
+    document.getElementById('stat-bal').textContent = '◈ ' + formatCash(user.balance);
+    const { count } = await db.from('profiles').select('id', { count: 'exact', head: true });
+    document.getElementById('stat-players').textContent = count ?? '—';
+    db.channel('profile-' + user.id)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, payload => {
+        const bal = payload.new.balance;
+        document.getElementById('balance-display').textContent = formatCash(bal);
+        document.getElementById('stat-bal').textContent = '◈ ' + formatCash(bal);
+      }).subscribe();
+  })();
+</script>
+</body>
+</html>

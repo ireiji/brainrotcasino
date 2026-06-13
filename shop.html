@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shop — Brainrot Casino</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .page-header { padding: 32px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+    .page-header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .page-header p { font-size: 13px; color: var(--sub); }
+
+    .shop-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+    .shop-tab {
+      padding: 10px 0; margin-right: 24px;
+      background: none; border: none; color: var(--sub);
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: all .15s;
+    }
+    .shop-tab.active { color: var(--text); border-bottom-color: var(--blue); }
+
+    .coming-soon {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 80px 40px; text-align: center;
+    }
+    .coming-soon-icon { font-size: 48px; margin-bottom: 16px; opacity: .6; }
+    .coming-soon h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 700; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .coming-soon p { font-size: 13px; color: var(--sub); max-width: 320px; margin: 0 auto; }
+
+    .back-link { display:inline-flex;align-items:center;gap:6px;color:var(--sub);text-decoration:none;font-size:13px;margin-bottom:8px;transition:color .15s; }
+    .back-link:hover { color:var(--text); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand"><div class="brand-dot"></div>Brainrot Casino</a>
+  <div class="navbar-right">
+    <div class="balance-pill">
+      <span class="balance-icon">◈</span>
+      <span id="balance-display">0.00</span>
+    </div>
+    <a href="deposit.html" class="btn-deposit" title="Deposit">+</a>
+    <div class="user-menu">
+      <div class="username-badge">
+        <div class="avatar" id="user-avatar">?</div>
+        <span class="username-text" id="username-display">Loading…</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="user-dropdown">
+        <a href="index.html">Games</a>
+        <a href="deposit.html">Deposit</a>
+        <div class="divider"></div>
+        <button class="danger" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <a href="index.html" class="back-link">← Back</a>
+  <div class="page-header">
+    <h1>Shop</h1>
+    <p>Spend your winnings on brainrots, lootboxes, and more.</p>
+  </div>
+
+  <div class="shop-tabs">
+    <button class="shop-tab active" data-tab="lootboxes">Lootboxes</button>
+    <button class="shop-tab" data-tab="brainrots">Brainrots</button>
+  </div>
+
+  <div id="tab-lootboxes">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">📦</div>
+      <h2>Lootboxes Coming Soon</h2>
+      <p>Mystery boxes, rare crates, and legendary bundles are being stocked. Check back soon.</p>
+    </div>
+  </div>
+
+  <div id="tab-brainrots" style="display:none">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">🐾</div>
+      <h2>Brainrot Market Coming Soon</h2>
+      <p>Buy brainrot pets directly from the casino using your balance. Stay tuned.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  document.querySelectorAll('.shop-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('[id^="tab-"]').forEach(p => p.style.display='none');
+      document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+    });
+  });
+  (async () => {
+    const user = await requireNonAdmin();
+    if (!user) return;
+    document.getElementById('username-display').textContent = user.username || 'Player';
+    document.getElementById('user-avatar').textContent = (user.username || 'P')[0].toUpperCase();
+    document.getElementById('balance-display').textContent = formatCash(user.balance);
+  })();
+</script>
+</body>
+</html>

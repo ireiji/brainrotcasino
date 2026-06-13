@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — Brainrot Casino</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: var(--ink);
+    }
+
+    /* split layout */
+    .auth-wrap {
+      display: flex;
+      width: 900px; max-width: 96vw;
+      min-height: 540px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative; z-index: 1;
+      box-shadow: 0 32px 80px rgba(0,0,0,.5);
+    }
+
+    /* left panel */
+    .auth-left {
+      flex: 1;
+      background: var(--surface);
+      padding: 48px 40px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .auth-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px;
+    }
+    .auth-logo .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--blue); box-shadow: 0 0 10px var(--blue);
+    }
+    .auth-tagline {
+      font-size: 13px; color: var(--sub);
+      margin-bottom: 36px;
+    }
+
+    .tab-row {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      padding: 8px 0; margin-right: 24px;
+      background: none; border: none;
+      color: var(--sub); font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all .15s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--blue); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    #auth-error {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.2);
+      color: var(--red);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px; font-size: 13px;
+      margin-bottom: 16px; display: none;
+    }
+
+    /* right panel — decorative */
+    .auth-right {
+      width: 320px;
+      background: linear-gradient(145deg, #0d1120 0%, #111828 100%);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 32px; gap: 24px;
+      position: relative; overflow: hidden;
+    }
+    .auth-right::before {
+      content: '';
+      position: absolute; top: -80px; right: -80px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(61,124,255,.15), transparent 70%);
+    }
+    .auth-right::after {
+      content: '';
+      position: absolute; bottom: -60px; left: -60px;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(240,165,0,.1), transparent 70%);
+    }
+    .stat-block {
+      text-align: center; position: relative; z-index: 1;
+    }
+    .stat-block .val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 40px; font-weight: 700;
+      color: var(--text); line-height: 1;
+    }
+    .stat-block .lbl {
+      font-size: 12px; color: var(--sub);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    .stat-divider { width: 1px; height: 40px; background: var(--border); }
+    .game-pills {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      justify-content: center; position: relative; z-index: 1;
+    }
+    .game-pill {
+      padding: 5px 12px;
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: 999px; font-size: 12px; color: var(--sub);
+    }
+    .auth-right-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700; color: var(--text);
+      text-align: center; position: relative; z-index: 1;
+      line-height: 1.2;
+    }
+    .auth-right-title span { color: var(--blue); }
+
+    @media (max-width: 640px) {
+      .auth-right { display: none; }
+      .auth-left { padding: 36px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <!-- LEFT: form -->
+    <div class="auth-left">
+      <div class="auth-logo">
+        <div class="dot"></div>
+        Brainrot Casino
+      </div>
+      <p class="auth-tagline">The premier brainrot betting platform.</p>
+
+      <div class="tab-row">
+        <button class="tab-btn active" data-tab="login">Sign In</button>
+        <button class="tab-btn" data-tab="register">Create Account</button>
+      </div>
+
+      <div id="auth-error"></div>
+
+      <!-- LOGIN -->
+      <div class="tab-panel active" id="tab-login">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input type="email" class="form-input" id="login-email" placeholder="you@email.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="login-password" placeholder="••••••••"/>
+        </div>
+        <button class="btn btn-primary w-full mt-8" id="btn-login" onclick="doLogin()">Sign In</button>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="tab-panel" id="tab-register">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" id="reg-username" placeholder="CoolPlayer123"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input type="email" class="form-input" id="reg-email" placeholder="you@email.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="reg-password" placeholder="Min. 6 characters"/>
+        </div>
+        <button class="btn btn-primary w-full mt-8" id="btn-register" onclick="doRegister()">Create Account</button>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center">
+          By registering you agree to our Terms of Service.
+        </p>
+      </div>
+    </div>
+
+    <!-- RIGHT: decorative -->
+    <div class="auth-right">
+      <div class="auth-right-title">Bet smarter.<br/><span>Win bigger.</span></div>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div class="stat-block"><div class="val">5</div><div class="lbl">Games</div></div>
+        <div class="stat-divider"></div>
+        <div class="stat-block"><div class="val">∞</div><div class="lbl">Brainrots</div></div>
+      </div>
+      <div class="game-pills">
+        <div class="game-pill">Crash</div>
+        <div class="game-pill">Mines</div>
+        <div class="game-pill">Plinko</div>
+        <div class="game-pill">Color Dice</div>
+        <div class="game-pill">Twist</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        hideError();
+      });
+    });
+
+    function showError(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg; el.style.display = 'block';
+    }
+    function hideError() { document.getElementById('auth-error').style.display = 'none'; }
+
+    function toast(msg, type='success') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = 'toast ' + (type==='error'?'error':type==='info'?'info':'');
+      t.textContent = msg; c.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    }
+
+    (async () => {
+      const session = await getSession();
+      if (session) {
+        const user = await getUser();
+        window.location.href = user?.role === 'admin' ? 'admin.html' : 'index.html';
+      }
+    })();
+
+    async function doLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) return showError('Please fill in all fields.');
+      const btn = document.getElementById('btn-login');
+      btn.textContent = 'Signing in…'; btn.disabled = true;
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      btn.textContent = 'Sign In'; btn.disabled = false;
+      if (error) return showError(error.message);
+      const user = await getUser();
+      window.location.href = user?.role === 'admin' ? 'admin.html' : 'index.html';
+    }
+
+    async function doRegister() {
+      const username = document.getElementById('reg-username').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      if (!username || !email || !password) return showError('Please fill in all fields.');
+      if (password.length < 6) return showError('Password must be at least 6 characters.');
+      const btn = document.getElementById('btn-register');
+      btn.textContent = 'Creating…'; btn.disabled = true;
+      const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
+      btn.textContent = 'Create Account'; btn.disabled = false;
+      if (error) return showError(error.message);
+      const user = await getUser();
+      window.location.href = user?.role === 'admin' ? 'admin.html' : 'index.html';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const tab = document.querySelector('.tab-btn.active')?.dataset.tab;
+      if (tab === 'login') doLogin(); else doRegister();
+    });
+  </script>
+</body>
+</html>

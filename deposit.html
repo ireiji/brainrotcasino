@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deposit — Brainrot Casino</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .page-header {
+      padding: 32px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    .page-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px; font-weight: 700; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .page-header p { font-size: 13px; color: var(--sub); }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--sub); text-decoration: none; font-size: 13px;
+      margin-bottom: 8px; transition: color .15s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    /* VALUE TABLE */
+    .value-table { width: 100%; border-collapse: collapse; }
+    .value-table th {
+      text-align: left; padding: 10px 16px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .8px;
+      color: var(--sub); border-bottom: 1px solid var(--border);
+    }
+    .value-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .value-table tr:last-child td { border-bottom: none; }
+    .value-table tr:hover td { background: rgba(255,255,255,.02); }
+    .rarity-common    { color: var(--sub); }
+    .rarity-rare      { color: #60a5fa; }
+    .rarity-epic      { color: #a78bfa; }
+    .rarity-legendary { color: var(--gold); }
+    .rarity-mythic    { color: #f472b6; }
+    .rarity-og        { color: #10b981; }
+    .rarity-secret    { color: #f59e0b; }
+
+    /* DEPOSIT FORM */
+    .deposit-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .deposit-grid { grid-template-columns: 1fr; }
+    }
+
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .form-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .form-card-body { padding: 20px; }
+
+    /* BRAINROT PICKER */
+    .brainrot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+    }
+    .brainrot-chip {
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 10px 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer; transition: all .15s;
+      font-size: 12px; color: var(--sub); text-align: center;
+      user-select: none;
+    }
+    .brainrot-chip:hover { border-color: var(--blue); color: var(--text); }
+    .brainrot-chip.selected {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+      color: var(--text);
+    }
+    .brainrot-chip .chip-emoji { font-size: 26px; }
+    .brainrot-chip .chip-val { font-size: 11px; color: var(--gold); font-weight: 600; }
+
+    /* QTY ROWS */
+    .qty-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .qty-row:last-child { border-bottom: none; }
+    .qty-left { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .qty-right { display: flex; align-items: center; gap: 8px; }
+    .qty-input {
+      width: 54px; padding: 5px 8px;
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 13px; text-align: center;
+      font-family: 'Inter', sans-serif; outline: none;
+    }
+    .qty-input:focus { border-color: var(--blue); }
+    .qty-subtotal { font-size: 12px; color: var(--gold); font-weight: 600; min-width: 70px; text-align: right; }
+
+    /* TOTAL BAR */
+    .total-bar {
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .total-bar-label { font-size: 13px; color: var(--sub); }
+    .total-bar-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px; font-weight: 700; color: var(--gold);
+    }
+
+    /* APPLICATIONS LIST */
+    .app-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .app-item-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .app-item-roblox { font-weight: 700; font-size: 14px; }
+    .app-item-items { font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+    .app-item-note { font-size: 12px; color: var(--sub); font-style: italic; }
+    .app-item-schedule { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 4px; }
+    .app-item-meta { text-align: right; }
+    .app-item-val { font-size: 14px; font-weight: 700; color: var(--gold); }
+    .app-item-date { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .empty-msg {
+      text-align: center; padding: 32px 20px;
+      color: var(--muted); font-size: 13px;
+    }
+
+    /* SEARCH & PAGINATION */
+    .search-box {
+      width: 100%; padding: 8px 12px;
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 13px; margin-bottom: 12px; outline: none;
+    }
+    .search-box:focus { border-color: var(--blue); }
+    .see-more-btn {
+      width: 100%; padding: 10px;
+      background: var(--raised); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--blue);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all .15s; margin-top: 8px;
+    }
+    .see-more-btn:hover { border-color: var(--blue); background: var(--blue-dim); }
+    .no-results {
+      text-align: center; padding: 24px 12px;
+      color: var(--muted); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand"><div class="brand-dot"></div>Brainrot Casino</a>
+  <div class="navbar-right">
+    <div class="balance-pill">
+      <span class="balance-icon">◈</span>
+      <span id="balance-display">0.00</span>
+    </div>
+    <div class="user-menu">
+      <div class="username-badge">
+        <div class="avatar" id="user-avatar">?</div>
+        <span class="username-text" id="username-display">Loading…</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="user-dropdown">
+        <a href="index.html">Games</a>
+        <a href="shop.html">Shop</a>
+        <div class="divider"></div>
+        <button class="danger" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <a href="index.html" class="back-link">← Back</a>
+  <div class="page-header">
+    <h1>Deposit</h1>
+    <p>Submit a deposit request. An admin will schedule the trade and credit your balance once confirmed.</p>
+  </div>
+
+  <!-- VALUE TABLE -->
+  <div class="section-label mb-16">Brainrot Values</div>
+  <input type="text" class="search-box" id="value-search" placeholder="Search brainrots…"/>
+  <div class="form-card mb-24" style="overflow-x:auto">
+    <table class="value-table">
+      <thead>
+        <tr>
+          <th style="width:40px"></th>
+          <th>Name</th>
+          <th>Rarity</th>
+          <th>Cash Value</th>
+        </tr>
+      </thead>
+      <tbody id="value-table-body"></tbody>
+    </table>
+    <div id="value-see-more-container" style="padding:12px 20px"></div>
+  </div>
+
+  <!-- DEPOSIT FORM + MY APPLICATIONS -->
+  <div class="deposit-grid">
+
+    <!-- LEFT: form -->
+    <div>
+      <div class="section-label mb-16">New Deposit Request</div>
+
+      <div class="form-card mb-16">
+        <div class="form-card-header">① Your Roblox Username</div>
+        <div class="form-card-body">
+          <input type="text" class="form-input" id="roblox-user" placeholder="e.g. CoolPlayer123"/>
+        </div>
+      </div>
+
+      <div class="form-card mb-16">
+        <div class="form-card-header">② Select Brainrots</div>
+        <div class="form-card-body">
+          <input type="text" class="search-box" id="selector-search" placeholder="Search brainrots…"/>
+          <div class="brainrot-grid" id="brainrot-selector"></div>
+          <div id="selector-see-more-container"></div>
+          <div id="selector-no-results" class="no-results" style="display:none">No results found</div>
+        </div>
+      </div>
+
+      <div class="form-card mb-16" id="qty-card" style="display:none">
+        <div class="form-card-header">③ Set Quantities</div>
+        <div class="form-card-body">
+          <div id="qty-inputs"></div>
+          <div class="total-bar mt-16">
+            <span class="total-bar-label">Estimated value</span>
+            <span class="total-bar-val" id="total-preview">◈ 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card mb-16">
+        <div class="form-card-header">④ Notes <span style="font-weight:400;color:var(--muted)">(optional)</span></div>
+        <div class="form-card-body">
+          <textarea class="form-input" id="app-notes" rows="2" placeholder="Anything the admin should know…"></textarea>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-full" onclick="submitApplication()">Submit Request</button>
+    </div>
+
+    <!-- RIGHT: my applications -->
+    <div>
+      <div class="section-label mb-16">My Requests</div>
+      <div id="app-list"><div class="empty-msg">No requests yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="brainrots.js"></script>
+<script>
+  const RARITY = { common:'Common', rare:'Rare', epic:'Epic', legendary:'Legendary', mythic:'Mythic', og:'OG', secret:'Secret' };
+  let currentUser = null;
+  const selected = {};
+
+  
+  // Pagination state
+  let valueTableShown = 10;
+  let selectorShown = 8;
+  let valueTableFiltered = [];
+  let selectorFiltered = [];
+
+
+  function renderValueTable() {
+    const searchTerm = document.getElementById('value-search').value.toLowerCase();
+    valueTableFiltered = BRAINROTS.filter(b => 
+      b.name.toLowerCase().includes(searchTerm) || 
+      (RARITY[b.rarity] || b.rarity).toLowerCase().includes(searchTerm)
+    );
+    
+    const tbody = document.getElementById('value-table-body');
+    tbody.innerHTML = '';
+    const toShow = valueTableFiltered.slice(0, valueTableShown);
+    toShow.forEach(b => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><img src="${b.image}" alt="${b.name}" style="width:32px;height:32px;object-fit:cover;border-radius:4px"/></td>
+        <td style="font-weight:600">${b.name}</td>
+        <td><span class="rarity-${b.rarity}">${RARITY[b.rarity] || b.rarity}</span></td>
+        <td style="font-weight:700;color:var(--gold)">◈ ${b.value.toLocaleString()}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    const container = document.getElementById('value-see-more-container');
+    if (valueTableFiltered.length > valueTableShown) {
+      container.innerHTML = `<button class="see-more-btn" onclick="showMoreValues()">See More (${valueTableFiltered.length - valueTableShown} more)</button>`;
+    } else {
+      container.innerHTML = '';
+    }
+  }
+
+  function showMoreValues() {
+    valueTableShown += 10;
+    renderValueTable();
+  }
+
+  function renderSelector() {
+    const searchTerm = document.getElementById('selector-search').value.toLowerCase();
+    selectorFiltered = BRAINROTS.filter(b => b.name.toLowerCase().includes(searchTerm));
+    
+    const selector = document.getElementById('brainrot-selector');
+    selector.innerHTML = '';
+    const toShow = selectorFiltered.slice(0, selectorShown);
+    
+    if (selectorFiltered.length === 0) {
+      document.getElementById('selector-no-results').style.display = 'block';
+    } else {
+      document.getElementById('selector-no-results').style.display = 'none';
+      toShow.forEach(b => {
+        const chip = document.createElement('div');
+        chip.className = 'brainrot-chip'; 
+        if (selected[b.id]) chip.classList.add('selected');
+        chip.dataset.id = b.id;
+        chip.innerHTML = `<img src="${b.image}" alt="${b.name}" style="width:60px;height:60px;object-fit:cover;border-radius:4px"/><div>${b.name}</div><div class="chip-val">◈ ${b.value.toLocaleString()}</div>`;
+        chip.addEventListener('click', () => {
+          chip.classList.toggle('selected');
+          if (chip.classList.contains('selected')) selected[b.id] = 1;
+          else delete selected[b.id];
+          renderQty(); recalc();
+        });
+        selector.appendChild(chip);
+      });
+    }
+
+    const container = document.getElementById('selector-see-more-container');
+    if (selectorFiltered.length > selectorShown) {
+      container.innerHTML = `<button class="see-more-btn" onclick="showMoreSelector()">See More (${selectorFiltered.length - selectorShown} more)</button>`;
+    } else {
+      container.innerHTML = '';
+    }
+  }
+
+  function showMoreSelector() {
+    selectorShown += 8;
+    renderSelector();
+  }
+
+  // Initial render
+  renderValueTable();
+  renderSelector();
+  document.getElementById('value-search').addEventListener('input', renderValueTable);
+  document.getElementById('selector-search').addEventListener('input', renderSelector);
+
+  function renderQty() {
+    const ids = Object.keys(selected);
+    const card = document.getElementById('qty-card');
+    card.style.display = ids.length ? 'block' : 'none';
+    const container = document.getElementById('qty-inputs');
+    container.innerHTML = '';
+    ids.forEach(id => {
+      const b = BRAINROTS.find(x => x.id === id);
+      const row = document.createElement('div');
+      row.className = 'qty-row';
+      row.innerHTML = `<div class="qty-left"><img src="${b.image}" alt="${b.name}" style="width:24px;height:24px;object-fit:cover;border-radius:3px"/><span>${b.name}</span></div>
+        <div class="qty-right">
+          <input type="number" min="1" max="99" value="${selected[id]}" class="qty-input" data-id="${id}" onchange="updateQty(this)"/>
+          <span class="qty-subtotal" id="sub-${id}">◈ ${(b.value * selected[id]).toLocaleString()}</span>
+        </div>`;
+      container.appendChild(row);
+    });
+  }
+
+  function updateQty(input) {
+    const id = input.dataset.id;
+    selected[id] = Math.max(1, parseInt(input.value) || 1);
+    const b = BRAINROTS.find(x => x.id === id);
+    const sub = document.getElementById('sub-' + id);
+    if (sub) sub.textContent = '◈ ' + (b.value * selected[id]).toLocaleString();
+    recalc();
+  }
+
+  function recalc() {
+    const total = Object.entries(selected).reduce((s, [id, qty]) => {
+      const b = BRAINROTS.find(x => x.id === id);
+      return s + (b ? b.value * qty : 0);
+    }, 0);
+    document.getElementById('total-preview').textContent = '◈ ' + total.toLocaleString();
+  }
+
+  async function submitApplication() {
+    if (!currentUser) return;
+    const roblox = document.getElementById('roblox-user').value.trim();
+    if (!roblox) return toast('Enter your Roblox username.', 'error');
+    const items = Object.entries(selected).map(([id, qty]) => ({ id, qty }));
+    if (!items.length) return toast('Select at least one brainrot.', 'error');
+    const total = items.reduce((s, { id, qty }) => {
+      const b = BRAINROTS.find(x => x.id === id); return s + (b ? b.value * qty : 0);
+    }, 0);
+    const notes = document.getElementById('app-notes').value.trim();
+    const { error } = await db.from('deposit_applications').insert({
+      user_id: currentUser.id, roblox_username: roblox,
+      items, estimated_value: total, notes: notes || null, status: 'pending'
+    });
+    if (error) return toast('Error: ' + error.message, 'error');
+    toast('Request submitted! An admin will be in touch.');
+    document.getElementById('roblox-user').value = '';
+    document.getElementById('app-notes').value = '';
+  }
+    Object.keys(selected).forEach(k => delete selected[k]);
+    document.getElementById('value-search').value = '';
+    document.getElementById('selector-search').value = '';
+    valueTableShown = 10;
+    selectorShown = 8;
+    renderValueTable();
+    renderSelector();
+    renderQty(); recalc(); loadApplications();
+
+  async function loadApplications() {
+    if (!currentUser) return;
+    const { data } = await db.from('deposit_applications').select('*')
+      .eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    const list = document.getElementById('app-list');
+    if (!data?.length) { list.innerHTML = '<div class="empty-msg">No requests yet.</div>'; return; }
+    list.innerHTML = data.map(app => {
+      const itemsStr = app.items.map(i => {
+        const b = BRAINROTS.find(x => x.id === i.id);
+        return b ? `${b.name} ×${i.qty}` : i.id;
+      }).join(', ');
+      const scheduleStr = app.scheduled_at
+        ? `<div class="app-item-schedule">Scheduled: ${new Date(app.scheduled_at).toLocaleString()}</div>` : '';
+      const noteStr = app.admin_note
+        ? `<div class="app-item-note">Admin: ${app.admin_note}</div>` : '';
+      return `<div class="app-item">
+        <div class="app-item-top">
+          <div>
+            <div class="app-item-roblox">${app.roblox_username}</div>
+            <div class="app-item-items">${itemsStr}</div>
+            ${noteStr}${scheduleStr}
+          </div>
+          <div class="app-item-meta">
+            <span class="badge badge-${app.status}">${app.status}</span>
+            <div class="app-item-val">◈ ${formatCash(app.estimated_value)}</div>
+            <div class="app-item-date">${new Date(app.created_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function toast(msg, type='success') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type==='error'?'error':'');
+    t.textContent = msg; c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  (async () => {
+    currentUser = await requireNonAdmin();
+    if (!currentUser) return;
+    document.getElementById('username-display').textContent = currentUser.username || 'Player';
+    document.getElementById('user-avatar').textContent = (currentUser.username || 'P')[0].toUpperCase();
+    document.getElementById('balance-display').textContent = formatCash(currentUser.balance);
+    await loadApplications();
+  })();
+</script>
+</body>
+</html>
