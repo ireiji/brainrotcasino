@@ -1,116 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Shop — Brainrot Casino</title>
-  <link rel="stylesheet" href="style.css"/>
-  <style>
-    .page-header { padding: 32px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
-    .page-header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .page-header p { font-size: 13px; color: var(--sub); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop — Brainrot Casino</title>
+<link rel="stylesheet" href="style.css">
 
-    .shop-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
-    .shop-tab {
-      padding: 10px 0; margin-right: 24px;
-      background: none; border: none; color: var(--sub);
-      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
-      cursor: pointer; border-bottom: 2px solid transparent;
-      margin-bottom: -1px; transition: all .15s;
-    }
-    .shop-tab.active { color: var(--text); border-bottom-color: var(--blue); }
+<style>
+.page-header{
+  padding:32px 0;
+  border-bottom:1px solid var(--border);
+  margin-bottom:28px;
+}
+.page-header h1{
+  font-size:32px;
+  margin:0 0 5px;
+}
+.page-header p{
+  color:var(--sub);
+  font-size:13px;
+}
 
-    .coming-soon {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 80px 40px; text-align: center;
-    }
-    .coming-soon-icon { font-size: 48px; margin-bottom: 16px; opacity: .6; }
-    .coming-soon h2 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 28px; font-weight: 700; color: var(--text);
-      margin-bottom: 8px;
-    }
-    .coming-soon p { font-size: 13px; color: var(--sub); max-width: 320px; margin: 0 auto; }
+.shop-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:16px;
+}
 
-    .back-link { display:inline-flex;align-items:center;gap:6px;color:var(--sub);text-decoration:none;font-size:13px;margin-bottom:8px;transition:color .15s; }
-    .back-link:hover { color:var(--text); }
-  </style>
+.shop-card{
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  overflow:hidden;
+  transition:.2s;
+}
+
+.shop-card:hover{
+  transform:translateY(-4px);
+  border-color:#3d7cff;
+}
+
+.shop-image-box{
+  height:170px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  background:linear-gradient(180deg,#20232b,transparent);
+}
+
+.shop-image-box img{
+  max-width:90%;
+  max-height:150px;
+  object-fit:contain;
+}
+
+.rarity{
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:#292d36;
+  padding:4px 9px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+}
+
+.shop-content{
+  padding:14px;
+}
+
+.shop-name{
+  font-size:15px;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+.shop-price{
+  color:#ffd54a;
+  font-size:17px;
+  font-weight:800;
+}
+
+.shop-stock{
+  color:var(--sub);
+  font-size:12px;
+  margin-top:5px;
+}
+
+.buy-btn{
+  width:100%;
+  margin-top:12px;
+}
+
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--sub);
+  text-decoration:none;
+  font-size:13px;
+  font-weight:600;
+  transition:all .15s;
+  margin-bottom:12px;
+}
+
+.back-link:hover{
+  color:var(--text);
+  transform:translateX(-2px);
+}
+</style>
 </head>
+
 <body>
 
 <nav class="navbar">
-  <a href="index.html" class="navbar-brand"><div class="brand-dot"></div>Brainrot Casino</a>
-  <div class="navbar-right">
-    <div class="balance-pill">
-      <span class="balance-icon">◈</span>
-      <span id="balance-display">0.00</span>
-    </div>
-    <a href="deposit.html" class="btn-deposit" title="Deposit">+</a>
-    <div class="user-menu">
-      <div class="username-badge">
-        <div class="avatar" id="user-avatar">?</div>
-        <span class="username-text" id="username-display">Loading…</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="user-dropdown">
-        <a href="index.html">Games</a>
-        <a href="deposit.html">Deposit</a>
-        <div class="divider"></div>
-        <button class="danger" onclick="signOut()">Sign out</button>
-      </div>
-    </div>
-  </div>
-</nav>
+<a href="index.html" class="navbar-brand">
+<div class="brand-dot"></div>
+Brainrot Casino
+</a>
 
-<div class="page-wrapper">
-  <a href="index.html" class="back-link">← Back</a>
-  <div class="page-header">
-    <h1>Shop</h1>
-    <p>Spend your winnings on brainrots, lootboxes, and more.</p>
-  </div>
-
-  <div class="shop-tabs">
-    <button class="shop-tab active" data-tab="lootboxes">Lootboxes</button>
-    <button class="shop-tab" data-tab="brainrots">Brainrots</button>
-  </div>
-
-  <div id="tab-lootboxes">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">📦</div>
-      <h2>Lootboxes Coming Soon</h2>
-      <p>Mystery boxes, rare crates, and legendary bundles are being stocked. Check back soon.</p>
-    </div>
-  </div>
-
-  <div id="tab-brainrots" style="display:none">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">🐾</div>
-      <h2>Brainrot Market Coming Soon</h2>
-      <p>Buy brainrot pets directly from the casino using your balance. Stay tuned.</p>
-    </div>
-  </div>
+<div class="navbar-right">
+<div class="balance-pill">
+<span>◈</span>
+<span id="balance-display">0.00</span>
 </div>
 
+<a href="deposit.html" class="btn-deposit">+</a>
+<a href="orders.html" class="btn-deposit">📦</a>
+
+<div class="user-menu">
+<div class="username-badge">
+<div class="avatar" id="user-avatar">?</div>
+<span id="username-display">Loading…</span>
+</div>
+</div>
+
+</div>
+</nav>
+
+
+<div class="page-wrapper">
+
+<a href="index.html" class="back-link">← Back</a>
+
+<div class="page-header">
+<h1>Brainrot Shop</h1>
+<p>Buy available brainrots and collectibles.</p>
+</div>
+
+
+<div id="shop-items" class="shop-grid">
+Loading items...
+</div>
+
+</div>
+
+
 <div id="toast-container"></div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
+
+
 <script>
-  document.querySelectorAll('.shop-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelectorAll('[id^="tab-"]').forEach(p => p.style.display='none');
-      document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
-    });
-  });
-  (async () => {
-    const user = await requireNonAdmin();
-    if (!user) return;
-    document.getElementById('username-display').textContent = user.username || 'Player';
-    document.getElementById('user-avatar').textContent = (user.username || 'P')[0].toUpperCase();
-    document.getElementById('balance-display').textContent = formatCash(user.balance);
-  })();
+
+let currentUser=null;
+
+
+function toast(msg,type="success"){
+ const c=document.getElementById("toast-container");
+ const t=document.createElement("div");
+ t.className="toast";
+ t.textContent=msg;
+ c.appendChild(t);
+ setTimeout(()=>t.remove(),3000);
+}
+
+
+
+async function renderShopItems(){
+
+const {data,error}=await db
+.from("shop_items")
+.select("*")
+.eq("active",true)
+.order("created_at",{ascending:false});
+
+
+const container=document.getElementById("shop-items");
+
+
+if(error){
+ container.innerHTML="Error loading items.";
+ console.error(error);
+ return;
+}
+
+
+if(!data.length){
+ container.innerHTML="No items available.";
+ return;
+}
+
+
+
+container.innerHTML=data.map(item=>{
+
+let out=item.stock<=0;
+
+
+return `
+
+<div class="shop-card">
+
+<div class="shop-image-box">
+
+<span class="rarity">
+${item.rarity || "Secret"}
+</span>
+
+
+<img src="${item.image_url || 'https://via.placeholder.com/200'}">
+
+</div>
+
+
+<div class="shop-content">
+
+<div class="shop-name">
+${item.name}
+</div>
+
+
+<div class="shop-price">
+◈ ${formatCash(item.price)}
+</div>
+
+
+<div class="shop-stock">
+${out ? "Out of stock" : item.stock+" available"}
+</div>
+
+
+<button 
+class="btn btn-primary buy-btn"
+${out?"disabled":""}
+onclick="placeOrder('${item.id}')">
+
+${out?"Sold Out":"Buy"}
+
+</button>
+
+
+</div>
+
+</div>
+
+`
+
+}).join("");
+
+}
+
+
+
+
+async function placeOrder(itemId){
+
+if(!currentUser)
+return toast("Not signed in");
+
+
+const {data:item}=await db
+.from("shop_items")
+.select("*")
+.eq("id",itemId)
+.single();
+
+
+if(!item || item.stock<=0)
+return toast("Unavailable");
+
+
+if(currentUser.balance < item.price)
+return toast("Insufficient balance");
+
+
+let newBalance=currentUser.balance-item.price;
+
+
+await db.from("profiles")
+.update({balance:newBalance})
+.eq("id",currentUser.id);
+
+
+
+await db.from("shop_orders")
+.insert([{
+user_id:currentUser.id,
+item_id:item.id,
+item_snapshot:item,
+quantity:1,
+total_price:item.price,
+status:"placed"
+}]);
+
+
+
+await db.from("shop_items")
+.update({stock:item.stock-1})
+.eq("id",item.id);
+
+
+
+currentUser.balance=newBalance;
+
+document.getElementById("balance-display").textContent=formatCash(newBalance);
+
+toast("Order placed!");
+
+renderShopItems();
+
+}
+
+
+
+
+(async()=>{
+
+currentUser=await requireNonAdmin();
+
+if(!currentUser)return;
+
+
+document.getElementById("username-display").textContent=currentUser.username || "Player";
+
+document.getElementById("user-avatar").textContent=(currentUser.username||"P")[0].toUpperCase();
+
+document.getElementById("balance-display").textContent=formatCash(currentUser.balance);
+
+
+renderShopItems();
+
+
+})();
+
+
 </script>
+
 </body>
 </html>
